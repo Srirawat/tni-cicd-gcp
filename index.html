@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="TNI Cloud Computing Assignment 06 - CI/CD on Google Cloud Platform" />
+    <title>TNI CI/CD on Google Cloud Platform</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #07111f;
+        --panel: rgba(13, 31, 52, 0.82);
+        --line: rgba(148, 184, 221, 0.2);
+        --text: #f4f8ff;
+        --muted: #a9bad0;
+        --blue: #52a8ff;
+        --green: #63e6a7;
+        --yellow: #ffd166;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(circle at 14% 18%, rgba(82, 168, 255, 0.2), transparent 30%),
+          radial-gradient(circle at 88% 10%, rgba(99, 230, 167, 0.12), transparent 28%),
+          var(--bg);
+      }
+
+      main {
+        width: min(1080px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 64px 0;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        gap: 10px;
+        align-items: center;
+        padding: 8px 12px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--green);
+        background: rgba(99, 230, 167, 0.08);
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--green);
+        box-shadow: 0 0 18px var(--green);
+      }
+
+      h1 {
+        max-width: 850px;
+        margin: 24px 0 18px;
+        font-size: clamp(42px, 8vw, 84px);
+        line-height: 0.98;
+        letter-spacing: -0.05em;
+      }
+
+      .accent { color: var(--blue); }
+
+      .lead {
+        max-width: 720px;
+        margin: 0;
+        color: var(--muted);
+        font-size: clamp(17px, 2.2vw, 22px);
+        line-height: 1.7;
+      }
+
+      .pipeline {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 12px;
+        margin: 48px 0 26px;
+      }
+
+      .stage, .card {
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        background: var(--panel);
+        box-shadow: 0 18px 70px rgba(0, 0, 0, 0.24);
+        backdrop-filter: blur(12px);
+      }
+
+      .stage {
+        min-height: 122px;
+        padding: 20px;
+      }
+
+      .stage span {
+        display: block;
+        margin-bottom: 20px;
+        color: var(--yellow);
+        font-size: 13px;
+        font-weight: 800;
+      }
+
+      .stage strong { font-size: 17px; }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 1.15fr 0.85fr;
+        gap: 18px;
+      }
+
+      .card { padding: 24px; }
+      .card h2 { margin: 0 0 12px; font-size: 20px; }
+      .card p { margin: 0; color: var(--muted); line-height: 1.7; }
+
+      code {
+        padding: 3px 7px;
+        border-radius: 7px;
+        color: var(--green);
+        background: rgba(99, 230, 167, 0.08);
+      }
+
+      footer {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        margin-top: 28px;
+        padding-top: 24px;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      @media (max-width: 820px) {
+        main { padding: 40px 0; }
+        .pipeline { grid-template-columns: 1fr; }
+        .stage { min-height: auto; }
+        .grid { grid-template-columns: 1fr; }
+        footer { flex-direction: column; }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="eyebrow"><span class="dot"></span> Deployment successful</div>
+
+      <!-- แก้ข้อความ h1 ด้านล่างนี้ระหว่างอัดวิดีโอ แล้ว git push เพื่อสาธิต CI/CD -->
+      <h1 class="hero__title">Hello from <span class="accent">CI/CD Pipeline</span></h1>
+
+      <p class="lead">
+        งานสัปดาห์ที่ 10 วิชา Cloud Computing — แก้โค้ดครั้งเดียว แล้ว GitHub Actions
+        จะ build Docker image, push ไป Docker Hub และ deploy ขึ้น Google Cloud VM โดยอัตโนมัติ
+      </p>
+
+      <section class="pipeline" aria-label="CI/CD pipeline stages">
+        <article class="stage"><span>01</span><strong>Git Push</strong></article>
+        <article class="stage"><span>02</span><strong>Docker Build</strong></article>
+        <article class="stage"><span>03</span><strong>Docker Hub</strong></article>
+        <article class="stage"><span>04</span><strong>SSH to GCP VM</strong></article>
+        <article class="stage"><span>05</span><strong>Run Container</strong></article>
+      </section>
+
+      <section class="grid">
+        <article class="card">
+          <h2>พร้อมสำหรับการทดสอบ</h2>
+          <p>แก้ข้อความใน <code>index.html</code> จากนั้น commit และ push ไปที่ branch <code>main</code></p>
+        </article>
+        <article class="card">
+          <h2>เวอร์ชัน</h2>
+          <p><strong>v1.0.0</strong> · TNI Assignment 06 · Google Cloud Platform</p>
+        </article>
+      </section>
+
+      <footer>
+        <span>Cloud Computing · CI/CD on Google Cloud Platform</span>
+        <span>Served by Nginx in Docker</span>
+      </footer>
+    </main>
+  </body>
+</html>

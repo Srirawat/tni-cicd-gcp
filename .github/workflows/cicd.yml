@@ -1,0 +1,98 @@
+name: Build, Push and Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: true
+
+env:
+  IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/tni-cicd-gcp
+  CONTAINER_NAME: tni-cicd-web
+
+jobs:
+  build-and-push:
+    name: Build and push Docker image
+    runs-on: ubuntu-latest
+    outputs:
+      image_ref: ${{ steps.image.outputs.image_ref }}
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Validate required files
+        run: |
+          test -s index.html
+          test -s Dockerfile
+          grep -q "CI/CD Pipeline" index.html
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.IMAGE_NAME }}:latest
+            ${{ env.IMAGE_NAME }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Record immutable image reference
+        id: image
+        run: echo "image_ref=${IMAGE_NAME}:${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+
+  deploy:
+    name: Deploy to Google Cloud VM
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Configure SSH
+        env:
+          VM_SSH_KEY: ${{ secrets.VM_SSH_KEY }}
+          VM_HOST: ${{ secrets.VM_HOST }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$VM_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "$VM_HOST" >> ~/.ssh/known_hosts
+
+      - name: Pull and run the new image on the VM
+        env:
+          VM_HOST: ${{ secrets.VM_HOST }}
+          VM_USER: ${{ secrets.VM_USER }}
+          IMAGE_REF: ${{ needs.build-and-push.outputs.image_ref }}
+        run: |
+          ssh -i ~/.ssh/deploy_key "$VM_USER@$VM_HOST" \
+            "IMAGE_REF='$IMAGE_REF' CONTAINER_NAME='$CONTAINER_NAME' bash -s" <<'REMOTE'
+          set -euo pipefail
+          docker pull "$IMAGE_REF"
+          docker rm -f "$CONTAINER_NAME" 2>/dev/null || true
+          docker run -d \
+            --name "$CONTAINER_NAME" \
+            --restart unless-stopped \
+            -p 80:80 \
+            "$IMAGE_REF"
+          docker image prune -f
+          docker ps --filter "name=$CONTAINER_NAME"
+          REMOTE
+
+      - name: Verify deployment over HTTP
+        env:
+          VM_HOST: ${{ secrets.VM_HOST }}
+        run: curl --fail --show-error --retry 12 --retry-delay 5 "http://$VM_HOST/health"
