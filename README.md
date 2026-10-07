@@ -2,6 +2,8 @@
 
 ตัวอย่าง CI/CD Pipeline บน Google Cloud Platform ตามโจทย์สัปดาห์ที่ 10
 
+ผู้จัดทำ: Srirawat Panyasawan
+
 เมื่อ push ไปที่ branch `main` ระบบจะทำงานตามลำดับนี้:
 
 1. GitHub Actions ตรวจไฟล์และ build Docker image
